@@ -1,4 +1,4 @@
-﻿//  ----------------------------------------------------------------------------
+//  ----------------------------------------------------------------------------
 //
 //  bootstrap-typeahead.js  
 //
@@ -208,7 +208,7 @@ function ($) {
         lookup: function (event) {
             var that = this,
                 items;
-
+                
             if (that.ajax) {
                 that.ajaxer();
             }
@@ -302,7 +302,7 @@ function ($) {
                 left: pos.left
             });
 
-            this.$menu.show();
+            this.$menu.show();  
             this.shown = true;
 
             return this;
@@ -341,8 +341,8 @@ function ($) {
                 i.find('a').html(that.highlighter(item[that.options.display], item));
                 return i[0];
             });
-
-            items.first().addClass('active');
+      
+                items.first().addClass('active');
             this.$menu.html(items);
             return this;
         },
@@ -363,14 +363,28 @@ function ($) {
         //  Selects the next result
         //
         next: function (event) {
-            var active = this.$menu.find('.active').removeClass('active');
+            var that = this;
+            var $menu = that.$menu;
+            var active = $menu.find('.active');
             var next = active.next();
-
+            var menuHeight = $menu.innerHeight();
+            var bottomPosition;
+            
             if (!next.length) {
                 next = $(this.$menu.find('li')[0]);
             }
-
+            
+            active.removeClass('active');
             next.addClass('active');
+            bottomPosition = next.position().top + next.height();
+            if(menuHeight < bottomPosition){
+                that.avoidMouseEnter = true;
+                $menu.on('mousemove',function(){
+                  that.avoidMouseEnter = false;
+                  $menu.off('mousemove');
+                });
+                $menu.scrollTop($menu.scrollTop() + bottomPosition - menuHeight);
+            }
         },
 
         //------------------------------------------------------------------
@@ -378,14 +392,28 @@ function ($) {
         //  Selects the previous result
         //
         prev: function (event) {
-            var active = this.$menu.find('.active').removeClass('active');
+            var that = this;
+            var $menu = that.$menu;
+            var active = $menu.find('.active');
             var prev = active.prev();
+            var menuScroll = $menu.scrollTop();
+            var topPosition;
 
             if (!prev.length) {
                 prev = this.$menu.find('li').last();
             }
 
+            active.removeClass('active');
             prev.addClass('active');
+            topPosition = menuScroll + prev.position().top;
+            if(menuScroll > topPosition){
+                that.avoidMouseEnter = true;
+                $menu.on('mousemove',function(){
+                  that.avoidMouseEnter = false;
+                  $menu.off('mousemove');
+                });
+                $menu.scrollTop(topPosition);
+            }
         },
 
         //=============================================================================================================
@@ -402,13 +430,13 @@ function ($) {
             this.$element.on('blur', $.proxy(this.blur, this))
                          .on('keyup', $.proxy(this.keyup, this));
 
-    		if (this.eventSupported('keydown')) {
-				this.$element.on('keydown', $.proxy(this.keypress, this));
-			} else {
-				this.$element.on('keypress', $.proxy(this.keypress, this));
-			}
-
-            this.$menu.on('click', $.proxy(this.click, this))
+            if (this.eventSupported('keydown')) {
+               this.$element.on('keydown', $.proxy(this.keypress, this));
+            } else {
+               this.$element.on('keypress', $.proxy(this.keypress, this));
+            }
+            
+            this.$menu.on('mousedown', $.proxy(this.click, this))
                       .on('mouseenter', 'li', $.proxy(this.mouseenter, this));
         },
 
@@ -484,6 +512,10 @@ function ($) {
             var that = this;
             e.stopPropagation();
             e.preventDefault();
+            if(this.keepFocus) {
+              that.$element.focus();
+              this.keepFocus = false;
+            }
             setTimeout(function () {
                 if (!that.$menu.is(':focus')) {
                   that.hide();
@@ -496,9 +528,16 @@ function ($) {
         //  Handles clicking on the results list
         //
         click: function (e) {
-            e.stopPropagation();
-            e.preventDefault();
-            this.select();
+            if(e.which != 1) {
+              return;
+            }
+            if(e.target.tagName == 'A'){
+              e.stopPropagation();
+              e.preventDefault();
+              this.select();
+            } else {
+              this.keepFocus = true;
+            }
         },
 
         //------------------------------------------------------------------
@@ -506,6 +545,10 @@ function ($) {
         //  Handles the mouse entering the results list
         //
         mouseenter: function (e) {
+            if(this.avoidMouseEnter) {
+              this.avoidMouseEnter = false;
+              return;
+            }
             this.$menu.find('.active').removeClass('active');
             $(e.currentTarget).addClass('active');
         }
@@ -556,7 +599,7 @@ function ($) {
     }
 
     $.fn.typeahead.Constructor = Typeahead;
-
+  
     //------------------------------------------------------------------
     //
     //  DOM-ready call for the Data API (no-JS implementation)
