@@ -517,7 +517,7 @@ function ($) {
               this.keepFocus = false;
             }
             setTimeout(function () {
-                if (!that.$menu.is(':focus')) {
+                if (!that.$element.is(':focus')) {
                   that.hide();
                 }
             }, 150)
