@@ -531,7 +531,7 @@ function ($) {
             if(e.which != 1) {
               return;
             }
-            if(e.target.tagName == 'A'){
+            if(e.target.tagName == 'A' || e.target.parentElement.tagName == 'A'){
               e.stopPropagation();
               e.preventDefault();
               this.select();
